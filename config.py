@@ -1,5 +1,26 @@
 import torch
-from run_description import *
+import os
+import datetime
+
+def create_run_dir_with_description():
+    RUN_NAME =  str(datetime.datetime.now()) + "/"
+    RUN_DIR = RUNS_DIR + RUN_NAME
+    os.makedirs(RUN_DIR)
+    IMGS_SAVED_DIR = RUN_DIR + "saved_images/"
+    os.makedirs(IMGS_SAVED_DIR)
+    os.makedirs(IMGS_SAVED_DIR + "val/")
+    os.makedirs(IMGS_SAVED_DIR + "test/")
+    
+    f = open(RUN_DIR + "model_parameters", "w")
+    f.write("Model: " + str(MODEL_FEATURES) + "\n")
+    f.write("Batch size: " + str(BATCH_SIZE) + "\n")
+    f.write("Number of epochs: " + str(NUM_EPOCHS) + "\n")
+    f.write("Leaning Rate: " + str(LEARNING_RATE) + "->" + str(MIN_LEARNING_RATE) + "\n")
+    f.write("Loss: " + LOSS_FUNCTION + "\n")
+    f.write("Notes: " + str(NOTES) + "\n")
+    f.close()
+    
+    return RUN_DIR
 
 # Hyperparameters etc.
 MODEL_FEATURES = [32,64,128,256]
@@ -32,9 +53,8 @@ VAL_MASK_DIR = "/mnt/data/matheusvirgilio/gigasistemica/dataset_quarter/masks/va
 DATASET_DICT = {"train_images"  : TRAIN_IMG_DIR, "train_masks" : TRAIN_MASK_DIR, 
                 "val_images"    : VAL_IMG_DIR,   "val_masks"   : VAL_MASK_DIR,}
 # Description
+NOTES = 'Describe run'
 RUNS_DIR = "/mnt/data/matheusvirgilio/gigasistemica/UNET/runs/"
-RUN_DIR = create_run_dir_with_description(RUNS_DIR, AUG_PARAMETERS, DATASET_DICT, MODEL_FEATURES, 
-                                          BATCH_SIZE, NUM_EPOCHS, LEARNING_RATE, MIN_LEARNING_RATE, 
-                                          LOSS_FUNCTION, LOSS_EXTRA_PARAMS, THRESHOLD)
+RUN_DIR = create_run_dir_with_description()
 IMG_PATH = RUN_DIR + "saved_images/"
 NAME_CHECKPOINT = RUN_DIR + "checkpoint.pth.tar"
