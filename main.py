@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 from torch.nn import BCEWithLogitsLoss
 from Circular_UNET import UNET
-from run_test import train_fn, validate
+from run import train_fn, validate
 from config import *
 from dataset import create_loader
 from utils import load_checkpoint
