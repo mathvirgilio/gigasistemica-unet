@@ -5,7 +5,7 @@ import torchvision
 from tqdm import tqdm
 from config import *
 from utils import dice_score_metric, get_metrics, save_checkpoint, get_otsu_threshold_from_tensor
-from augmentations import apply_TTA, revert_TTA
+from augmentations import apply_TTA, revert_TTA, get_final_bin_mask
 
 
 writer = SummaryWriter(log_dir= RUN_DIR + "plot/")
@@ -35,6 +35,13 @@ def run_on_dataloader(model, loader, iter_counter, loss_fn, train=True, img_path
 
             # forward
             batch_size = len(data)
+            
+            if APPLY_TTA and not train:
+                flip_data, filter_data = apply_TTA(data)
+                flip_data = flip_data.to(device=DEVICE)
+                filter_data = filter_data.to(device=DEVICE)
+                data = torch.cat([data, flip_data, filter_data], axis=0)
+            
             predictions = model(data)
 
             loss = []
@@ -57,19 +64,45 @@ def run_on_dataloader(model, loader, iter_counter, loss_fn, train=True, img_path
             loop.set_postfix(loss = loss.item())
             
             if not train:
-                predictions_sigmoided = torch.sigmoid(predictions)
-                preds_thresholded = predictions_sigmoided.detach().clone()
-                for i in range(batch_size):
-                    threshold = get_otsu_threshold_from_tensor(predictions_sigmoided[i]) #VERIFICAR THRESHOLD
-                    preds_thresholded[i] = (preds_thresholded[i] > threshold).float()
+                if APPLY_TTA:
+                    predictions[batch_size:2*batch_size], predictions[2*batch_size:] = revert_TTA(predictions[batch_size:2*batch_size], predictions[2*batch_size:])
                     
-                    #Save images
+                    predictions_sigmoided = torch.sigmoid(predictions)
+                    preds_thresholded = predictions_sigmoided.detach().clone()
+                    for i in range(len(predictions)):
+                        threshold = get_otsu_threshold_from_tensor(predictions_sigmoided[i])
+                        preds_thresholded[i] = (preds_thresholded[i] > threshold).float()
+                        
+                    #preds_thresholded = get_final_bin_mask(preds_thresholded[:batch_size], 
+                    #                                       preds_thresholded[batch_size:2*batch_size], 
+                    #                                       preds_thresholded[2*batch_size:]).float()
+                    
                     if img_path:
-                        aux_pred = torch.cat([data[i:i+1], targets[i:i+1]], axis=0) 
-                        aux_pred = torch.cat([aux_pred, predictions_sigmoided[i:i+1]], axis=0)
-                        aux_pred = torch.cat([aux_pred, preds_thresholded[i:i+1]], axis=0)
-                        torchvision.utils.save_image(aux_pred, f"{img_path}{batch_idx}_{i}.png")
+                        for i in range(batch_size):
+                            aux_pred = torch.cat([data[i:i+1], targets[i:i+1]], axis=0) 
+                            aux_pred = torch.cat([aux_pred, predictions_sigmoided[i:i+1]], axis=0)
+                            aux_pred = torch.cat([aux_pred, preds_thresholded[i:i+1]], axis=0)
+                            aux_pred = torch.cat([aux_pred, preds_thresholded[i+batch_size:i+batch_size+1]], axis=0)
+                            aux_pred = torch.cat([aux_pred, preds_thresholded[i+2*batch_size:i+2*batch_size+1]], axis=0)
+                            torchvision.utils.save_image(aux_pred, f"{img_path}{batch_idx}_{i}.png")
+                else:
+                    predictions_sigmoided = torch.sigmoid(predictions)
+                    preds_thresholded = predictions_sigmoided.detach().clone()
+                    
+                    for i in range(batch_size):
+                        threshold = get_otsu_threshold_from_tensor(predictions_sigmoided[i])
+                        preds_thresholded[i] = (preds_thresholded[i] > threshold).float()
+                        
+                        #Save images
+                        if img_path:
+                            aux_pred = torch.cat([data[i:i+1], targets[i:i+1]], axis=0) 
+                            aux_pred = torch.cat([aux_pred, predictions_sigmoided[i:i+1]], axis=0)
+                            aux_pred = torch.cat([aux_pred, preds_thresholded[i:i+1]], axis=0)
+                            torchvision.utils.save_image(aux_pred, f"{img_path}{batch_idx}_{i}.png")
                 
+                preds_thresholded = get_final_bin_mask(preds_thresholded[:batch_size], 
+                                                           preds_thresholded[batch_size:2*batch_size], 
+                                                           preds_thresholded[2*batch_size:]).float()
                 dice_score += dice_score_metric(preds_thresholded, targets)
                 p, r, f1 = get_metrics(preds_thresholded, targets, apply_sigmoid=False)
                 precision += p
@@ -113,9 +146,9 @@ def train_fn(loader, model, optimizer, loss_fn, scaler, val_loader=None):
             
             writer.add_scalar('validation/loss', mean_loss, epoch)
             writer.add_scalar('validation/score', metrics["dice score"], epoch)
-            writer.add_scalar('validation/score', metrics["precision"], epoch)
-            writer.add_scalar('validation/score', metrics["recall"], epoch)
-            writer.add_scalar('validation/score', metrics["f1_score"], epoch)
+            writer.add_scalar('validation/precision', metrics["precision"], epoch)
+            writer.add_scalar('validation/recall', metrics["recall"], epoch)
+            writer.add_scalar('validation/f1_score', metrics["f1_score"], epoch)
             
             
 def validate(loader, model, loss_fn):
