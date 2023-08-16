@@ -4,6 +4,12 @@ from albumentations.augmentations.functional import _maybe_process_in_chunks, pr
 import torch
 from scipy.ndimage import gaussian_filter
 
+from skimage import restoration
+
+def rolling_ball(array):
+    background = restoration.rolling_ball(array)
+    array_restaured = array-background
+    return array_restaured
 
 def build_train_augmentations(in_channels = 2):
     """augmentations utilizadas pelo campeão do XView3. No caso do ScaleRotate, foi utilizada reflexão ao invés do padding com NaN""" 
@@ -43,26 +49,17 @@ def build_test_augmentations(in_channels = 2):
     )
     return transforms
 
-def apply_TTA(image, DEVICE):
-    h_image = torch.Tensor(image.cpu().numpy()[:,:,:,::-1].copy())
-    v_image = torch.Tensor(image.cpu().numpy()[:,:,::-1,:].copy())
-    #r_image = torch.Tensor(image.cpu().numpy()[:,:,::-1,::-1].copy())
-    r_image = torch.Tensor(gaussian_filter(image.cpu().numpy(), sigma=7).copy())
-    
-    return h_image, v_image, r_image
+def apply_TTA(image):
+    flip_image = torch.Tensor(image.cpu().numpy()[:,:,:,::-1].copy())
+    filter_image = torch.Tensor(gaussian_filter(image.cpu().numpy(), sigma=1).copy())
+    #filter_image = torch.Tensor(rolling_ball(image.cpu().numpy()).copy())
+    return flip_image, filter_image
 
-def revert_TTA(h_mask, v_mask, r_mask, DEVICE):
-    h_output = torch.Tensor(h_mask.cpu().numpy()[:,:,:,::-1].copy())
-    v_output = torch.Tensor(v_mask.cpu().numpy()[:,:,::-1,:].copy())
-    #r_output = torch.Tensor(r_mask.cpu().numpy()[:,:,::-1,::-1].copy())
-    r_output = torch.Tensor(r_mask.cpu().numpy().copy())
+def revert_TTA(flip_mask, filter_mask):
+    flip_output = torch.Tensor(flip_mask.cpu().numpy()[:,:,:,::-1].copy())
+    filter_output = torch.Tensor(filter_mask.cpu().numpy().copy())
     
-    return h_output, v_output, r_output
-
-def get_final_bin_mask2(orig_bin_mask, h_bin_mask, v_bin_mask, r_bin_mask):
-    sum_bin_mask = orig_bin_mask + h_bin_mask + v_bin_mask + r_bin_mask
-    final_bin_mask = sum_bin_mask >= 3
-    return final_bin_mask
+    return flip_output, filter_output
 
 def get_final_bin_mask(orig_bin_mask, h_bin_mask, v_bin_mask):
     sum_bin_mask = orig_bin_mask + h_bin_mask + v_bin_mask
