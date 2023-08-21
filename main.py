@@ -19,12 +19,13 @@ def main():
     train_loader, val_loader = create_loader(DATASET_DICT, AUG_PARAMETERS, BATCH_SIZE, NUM_WORKERS, PIN_MEMORY, in_channels = IN_CHANNELS)
     scaler = torch.cuda.amp.GradScaler()
     
+    if LOAD_RUN:
+        NAME_CHECKPOINT = '/mnt/data/matheusvirgilio/gigasistemica/UNET/runs/Teste Batch Size = 8 (300 épocas)/checkpoint.pth.tar'
+        load_checkpoint(torch.load(NAME_CHECKPOINT, map_location=torch.device(DEVICE)), model)
     if TRAINING:
         train_fn(train_loader, model, optimizer, loss_fn, scaler, val_loader)
-    elif LOAD_RUN:
-        NAME_CHECKPOINT = '/mnt/data/matheusvirgilio/gigasistemica/UNET/runs/Teste 1 (Bem sucedido)/checkpoint.pth.tar'
-        load_checkpoint(torch.load(NAME_CHECKPOINT, map_location=torch.device(DEVICE)), model)
-        validate(val_loader, model, loss_fn)
+
+    validate(val_loader, model, loss_fn)
     
 if __name__ == '__main__':
     main()
