@@ -54,7 +54,7 @@ def get_loaders(train_dir, train_maskdir, val_dir, val_maskdir, batch_size,
     return train_loader, val_loader
 
 
-def create_loader(dataset, aug_parameters, batch_size, n_workers, pin_memory, in_channels = 2):
+def create_loader(dataset, batch_size, n_workers, pin_memory, in_channels = 2):
     train_transform = build_train_augmentations(in_channels)
 
     val_transforms = build_test_augmentations(in_channels)

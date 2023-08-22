@@ -16,16 +16,15 @@ def main():
     loss_fn = sigmoid_focal_loss #Loss de treinamento
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE) #Otimizador
     #Carregamento do dataset
-    train_loader, val_loader = create_loader(DATASET_DICT, AUG_PARAMETERS, BATCH_SIZE, NUM_WORKERS, PIN_MEMORY, in_channels = IN_CHANNELS)
+    train_loader, val_loader = create_loader(DATASET_DICT, BATCH_SIZE, NUM_WORKERS, PIN_MEMORY, in_channels = IN_CHANNELS)
     scaler = torch.cuda.amp.GradScaler()
     
     if LOAD_RUN:
-        NAME_CHECKPOINT = '/mnt/data/matheusvirgilio/gigasistemica/UNET/runs/Teste Batch Size = 8 (300 épocas)/checkpoint.pth.tar'
+        NAME_CHECKPOINT = '/mnt/data/matheusvirgilio/gigasistemica/UNET/runs/Dataset 1/2 - Testes FocalLoss-Gamma/Teste Loss Gamma = 1/checkpoint.pth.tar'
         load_checkpoint(torch.load(NAME_CHECKPOINT, map_location=torch.device(DEVICE)), model)
+        validate(val_loader, model, loss_fn)
     if TRAINING:
         train_fn(train_loader, model, optimizer, loss_fn, scaler, val_loader)
-
-    validate(val_loader, model, loss_fn)
     
 if __name__ == '__main__':
     main()
