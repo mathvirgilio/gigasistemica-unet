@@ -1,119 +1,145 @@
-# DC-UNet para Segmentação de Ateroma
+# DC-UNet for Atheroma Segmentation
 
-Este projeto implementa uma arquitetura DC-UNet (Dense Convolutional UNet) para segmentação de ateroma em imagens médicas. O modelo utiliza uma arquitetura baseada em U-Net com blocos Dense Convolutional para melhorar a captura de características em diferentes escalas.
+This project implements a DC-UNet (Dense Convolutional UNet) architecture for atheroma segmentation in medical images. The model utilizes a U-Net-based architecture with Dense Convolutional blocks to improve feature capture at different scales.
 
-## 📁 Estrutura do Projeto
+## 📋 About the Project
+
+This project is a key component of **GigaSistêmica**, a collaborative initiative between GigaCandanga and the University of Brasília. GigaSistêmica aims to revolutionize diagnostic and predictive capabilities for systemic diseases through the integration of AI and medical imaging technologies.
+
+This specific implementation focuses on **atheroma detection and segmentation**, providing an automated tool to assist medical professionals in identifying and analyzing atherosclerotic plaques in medical images.
+
+## 🏗️ Architecture
+
+The DC-UNet architecture is based on the U-Net framework with the following improvements:
+
+- **Encoder**: DCBlock (Dense Convolutional) blocks with ResPath to preserve information
+- **Decoder**: Upsampling with skip connections
+- **Loss Function**: Supports IoU Loss and Focal Loss
+- **Input**: Grayscale images (1 channel) or RGB (3 channels)
+- **Output**: Binary segmentation mask
+
+### Reference
+
+This implementation is based on the DC-UNet architecture proposed in:
+
+**DC-UNet: Rethinking the U-Net Architecture with Dual Channel Efficient CNN for Medical Images Segmentation**
+
+*Ange Lou, Shuyue Guan, Murray Loew*
+
+> Recently, deep learning has become much more popular in computer vision area. The Convolution Neural Network (CNN) has brought a breakthrough in images segmentation areas, especially, for medical images. In this regard, U-Net is the predominant approach to medical image segmentation task. The U-Net not only performs well in segmenting multimodal medical images generally, but also in some tough cases of them. However, we found that the classical U-Net architecture has limitation in several aspects. Therefore, we applied modifications: 1) designed efficient CNN architecture to replace encoder and decoder, 2) applied residual module to replace skip connection between encoder and decoder to improve based on the-state-of-the-art U-Net model. Following these modifications, we designed a novel architecture--DC-UNet, as a potential successor to the U-Net architecture. We created a new effective CNN architecture and build the DC-UNet based on this CNN. We have evaluated our model on three datasets with tough cases and have obtained a relative improvement in performance of 2.90%, 1.49% and 11.42% respectively compared with classical U-Net. In addition, we used the Tanimoto similarity to replace the Jaccard similarity for gray-to-gray image comparisons.
+
+## 📁 Project Structure
 
 ```
 gigasistemica-unet/
 ├── src/
-│   ├── models/           # Arquiteturas do modelo
-│   │   └── DC_UNet.py    # Implementação do DC-UNet
-│   ├── data/             # Data loaders e datasets
-│   │   ├── dataloader.py # Data loaders principais
-│   │   └── ateroma_dataloader.py  # Data loader específico para ateroma
-│   ├── training/         # Scripts de treinamento
-│   │   └── train.py      # Script principal de treinamento
-│   └── utils/            # Utilitários
-│       ├── loss.py       # Funções de loss
-│       ├── utils.py      # Funções auxiliares
-│       ├── validate.py   # Função de validação
+│   ├── models/           # Model architectures
+│   │   └── DC_UNet.py    # DC-UNet implementation
+│   ├── data/             # Data loaders and datasets
+│   │   ├── dataloader.py # Main data loaders
+│   │   └── ateroma_dataloader.py  # Atheroma-specific data loader
+│   ├── training/         # Training scripts
+│   │   └── train.py      # Main training script
+│   └── utils/            # Utilities
+│       ├── loss.py       # Loss functions
+│       ├── utils.py      # Helper functions
+│       ├── validate.py   # Validation function
 │       └── TTA.py        # Test Time Augmentation
-├── config/               # Configurações
-│   └── config.py         # Arquivo de configuração centralizado
-├── scripts/              # Scripts de execução
-│   └── test.py           # Script de teste/validação
-├── requirements.txt      # Dependências do projeto
-└── README.md            # Este arquivo
+├── config/               # Configuration files
+│   └── config.py         # Centralized configuration file
+├── scripts/              # Execution scripts
+│   └── test.py           # Testing/validation script
+├── requirements.txt      # Project dependencies
+└── README.md             # This file
 ```
 
-## 🚀 Instalação
+## 🚀 Installation
 
-1. Clone o repositório:
+1. Clone the repository:
 ```bash
-git clone <url-do-repositorio>
+git clone <repository-url>
 cd gigasistemica-unet
 ```
 
-2. Crie um ambiente virtual (recomendado):
+2. Create a virtual environment (recommended):
 ```bash
 python -m venv venv
-source venv/bin/activate  # No Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. Instale as dependências:
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-## ⚙️ Configuração
+## ⚙️ Configuration
 
-Todas as configurações estão centralizadas no arquivo `config/config.py`. Você pode:
+All configurations are centralized in the `config/config.py` file. You can:
 
-1. **Editar diretamente o arquivo `config/config.py`** para ajustar paths e hiperparâmetros
+1. **Edit the `config/config.py` file directly** to adjust paths and hyperparameters
 
-2. **Usar variáveis de ambiente** (recomendado para diferentes ambientes):
+2. **Use environment variables** (recommended for different environments):
 ```bash
-export DATASET_DIR="/caminho/para/dataset"
-export RUNS_DIR="/caminho/para/runs"
+export DATASET_DIR="/path/to/dataset"
+export RUNS_DIR="/path/to/runs"
 export DEVICE="cuda:0"
 export BATCH_SIZE=4
 export NUM_EPOCHS=300
 export LEARNING_RATE=1e-4
 ```
 
-### Estrutura Esperada do Dataset
+### Expected Dataset Structure
 
-O dataset deve seguir a seguinte estrutura:
+The dataset should follow this structure:
 ```
 dataset/
 ├── images/
-│   ├── train/     # Imagens de treinamento (.jpg ou .png)
-│   └── val/       # Imagens de validação (.jpg ou .png)
+│   ├── train/     # Training images (.jpg or .png)
+│   └── val/       # Validation images (.jpg or .png)
 └── masks/
-    ├── train/     # Máscaras de treinamento (.png)
-    └── val/       # Máscaras de validação (.png ou .tif)
+    ├── train/     # Training masks (.png)
+    └── val/       # Validation masks (.png or .tif)
 ```
 
-## 📊 Uso
+## 📊 Usage
 
-### Treinamento
+### Training
 
-Para treinar o modelo, execute:
+To train the model, run:
 
 ```bash
 python src/training/train.py
 ```
 
-Ou com variáveis de ambiente customizadas:
+Or with custom environment variables:
 ```bash
-DATASET_DIR="/caminho/dataset" DEVICE="cuda:0" python src/training/train.py
+DATASET_DIR="/path/dataset" DEVICE="cuda:0" python src/training/train.py
 ```
 
-O script irá:
-- Criar um diretório de run com timestamp em `runs/`
-- Salvar checkpoints periodicamente
-- Registrar métricas no TensorBoard
-- Executar validação a cada época
+The script will:
+- Create a run directory with timestamp in `runs/`
+- Save checkpoints periodically
+- Log metrics to TensorBoard
+- Run validation at each epoch
 
-### Teste/Validação
+### Testing/Validation
 
-Para testar um modelo treinado:
+To test a trained model:
 
 ```bash
-python scripts/test.py --checkpoint /caminho/para/checkpoint.pth.tar --save_images
+python scripts/test.py --checkpoint /path/to/checkpoint.pth.tar --save_images
 ```
 
-Opções disponíveis:
-- `--checkpoint`: Caminho para o checkpoint do modelo (obrigatório)
-- `--val_img_dir`: Diretório com imagens de validação (opcional, usa config)
-- `--val_mask_dir`: Diretório com máscaras de validação (opcional, usa config)
-- `--device`: Device para execução (`cuda` ou `cpu`)
-- `--apply_tta`: Aplicar Test Time Augmentation
-- `--save_images`: Salvar imagens de resultado
-- `--output_dir`: Diretório para salvar métricas detalhadas (CSV)
+Available options:
+- `--checkpoint`: Path to model checkpoint (required)
+- `--val_img_dir`: Directory with validation images (optional, uses config)
+- `--val_mask_dir`: Directory with validation masks (optional, uses config)
+- `--device`: Execution device (`cuda` or `cpu`)
+- `--apply_tta`: Apply Test Time Augmentation
+- `--save_images`: Save result images
+- `--output_dir`: Directory to save detailed metrics (CSV)
 
-Exemplo completo:
+Complete example:
 ```bash
 python scripts/test.py \
     --checkpoint runs/2024-11-17_15-30-00/checkpoint.pth.tar \
@@ -122,75 +148,67 @@ python scripts/test.py \
     --output_dir results/
 ```
 
-## 🏗️ Arquitetura
+## 🎯 Key Hyperparameters
 
-O DC-UNet é baseado na arquitetura U-Net com as seguintes características:
+- **TRAIN_SIZE**: Input image size (default: 512x512)
+- **IN_CHANNELS**: Number of input channels (default: 1 for grayscale)
+- **BATCH_SIZE**: Batch size (default: 4)
+- **LEARNING_RATE**: Learning rate (default: 1e-4)
+- **NUM_EPOCHS**: Number of epochs (default: 300)
+- **LOSS_FUNCTION**: Loss function ('IoU' or 'Focal Loss')
 
-- **Encoder**: Blocos DCBlock (Dense Convolutional) com ResPath para preservar informações
-- **Decoder**: Upsampling com skip connections
-- **Loss Function**: Suporta IoU Loss e Focal Loss
-- **Input**: Imagens em escala de cinza (1 canal) ou RGB (3 canais)
-- **Output**: Máscara binária de segmentação
+## 📈 Metrics
 
-### Hiperparâmetros Principais
+The model calculates the following metrics:
 
-- **TRAIN_SIZE**: Tamanho das imagens de entrada (padrão: 512x512)
-- **IN_CHANNELS**: Número de canais de entrada (padrão: 1 para grayscale)
-- **BATCH_SIZE**: Tamanho do batch (padrão: 4)
-- **LEARNING_RATE**: Taxa de aprendizado (padrão: 1e-4)
-- **NUM_EPOCHS**: Número de épocas (padrão: 300)
-- **LOSS_FUNCTION**: Função de loss ('IoU' ou 'Focal Loss')
+- **Precision**: Segmentation precision
+- **Recall**: Segmentation recall
+- **F1 Score**: Harmonic mean of precision and recall
+- **IoU (Intersection over Union)**: Overlap between prediction and ground truth
+- **Dice Score**: Dice coefficient
+- **AUC**: Area under the ROC curve
 
-## 📈 Métricas
-
-O modelo calcula as seguintes métricas:
-
-- **Precision**: Precisão da segmentação
-- **Recall**: Recall da segmentação
-- **F1 Score**: Média harmônica de precision e recall
-- **IoU (Intersection over Union)**: Sobreposição entre predição e ground truth
-- **Dice Score**: Coeficiente de Dice
-- **AUC**: Área sob a curva ROC
-
-## 🔧 Funcionalidades
+## 🔧 Features
 
 ### Test Time Augmentation (TTA)
 
-O projeto suporta TTA para melhorar a robustez das predições. Quando ativado, o modelo faz predições em múltiplas versões aumentadas da imagem e combina os resultados.
+The project supports TTA to improve prediction robustness. When enabled, the model makes predictions on multiple augmented versions of the image and combines the results.
 
 ### Data Augmentation
 
-Durante o treinamento, as seguintes transformações podem ser aplicadas:
-- Rotação aleatória (até 90 graus)
-- Flip horizontal e vertical
-- Ajustes de brilho e contraste
-- Transformações elásticas
+During training, the following transformations can be applied:
+- Random rotation (up to 90 degrees)
+- Horizontal and vertical flips
+- Brightness and contrast adjustments
+- Elastic transformations
 
-## 📝 Notas
+## 📝 Notes
 
-- O projeto foi desenvolvido para segmentação de ateroma, mas pode ser adaptado para outras tarefas de segmentação semântica
-- Os paths hardcoded foram removidos e centralizados em `config/config.py`
-- O código foi organizado em módulos para facilitar manutenção e extensão
+- The project was developed for atheroma segmentation but can be adapted for other semantic segmentation tasks
+- Hardcoded paths have been removed and centralized in `config/config.py`
+- Code has been organized into modules for easier maintenance and extension
 
-## 🤝 Contribuindo
+## 🤝 Contributing
 
-Contribuições são bem-vindas! Por favor:
+Contributions are welcome! Please:
 
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 📄 Licença
+## 📄 License
 
-Este projeto está sob licença [especificar licença].
+This project is licensed under [specify license].
 
-## 👥 Autores
+## 👥 Authors
 
-- [Seu Nome] - Desenvolvimento inicial
+- **Matheus Virgílio Ferreira** - Initial development
 
-## 🙏 Agradecimentos
+## 🙏 Acknowledgments
 
-- Baseado na arquitetura U-Net original
-- Utiliza componentes do PyTorch e bibliotecas open-source
+- Based on the original U-Net architecture
+- DC-UNet architecture from: Lou, A., Guan, S., & Loew, M. (2020). DC-UNet: Rethinking the U-Net Architecture with Dual Channel Efficient CNN for Medical Images Segmentation. 
+- Uses components from PyTorch and open-source libraries
+- Part of the GigaSistêmica initiative by GigaCandanga and University of Brasília
